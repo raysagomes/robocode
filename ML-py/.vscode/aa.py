@@ -5,38 +5,28 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 # Função para carregar dados
-import pandas as pd
-
 def load_data(file):
     try:
-        # Use semicolon (;) as the delimiter
+        # ; para separar
         df = pd.read_csv(file, delimiter=";")
 
-        # Replace commas with dots, handle extra spaces, and remove non-numeric values (more robust)
         for col in ['MyEnergie', 'MyGunHeat', 'MyGunHeading', 'MyHeading', 'MyRadarHeading', 'Velocity', 'MyVelocity', 'Energy', 'Distance', 'Bearing', 'Heading']:
             df[col] = pd.to_numeric(df[col].str.strip().str.replace(',', '.', regex=True), errors='coerce')
-
-        # Handle the rank column specifically
-        df['Rank'] = df['Rank'].astype(int)  # Convert rank to integer
 
         return df
     except FileNotFoundError:
         print(f"O arquivo {file} não foi encontrado.")
         return pd.DataFrame()
 
-# Load data using the adjusted function
+# Colocar tudo num lugar so
 df = load_data('coletandodados_data_onScannedRobot.csv')
 
-# Now you can use the 'df' DataFrame for further analysis
-print(df.head())  # Print the first few rows for inspection
-
-
 if not df.empty:
-    # Imprima as colunas do DataFrame para verificar se estão corretas
+    # Imprimir as colunas do DataFrame para verificar se estão corretas
     print("Colunas do DataFrame:")
     print(df.columns)
 
-    # Adicione a coluna 'ganhou' (1 se ficou em primeiro, 0 caso contrário)
+    # Adicionar a coluna 'ganhou' (1 se ficou em primeiro, 0 caso contrário)
     df['ganhou'] = df['Rank'].apply(lambda x: 1 if x == '1st' else 0)
 
     # Exibir as primeiras linhas para verificar se a coluna foi adicionada corretamente

@@ -1,0 +1,86 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Função para carregar dados
+import pandas as pd
+
+def load_data(file):
+    try:
+        # Use semicolon (;) as the delimiter
+        df = pd.read_csv(file, delimiter=";")
+
+        # Replace commas with dots, handle extra spaces, and remove non-numeric values (more robust)
+        for col in ['MyEnergie', 'MyGunHeat', 'MyGunHeading', 'MyHeading', 'MyRadarHeading', 'Velocity', 'MyVelocity', 'Energy', 'Distance', 'Bearing', 'Heading']:
+            df[col] = pd.to_numeric(df[col].str.strip().str.replace(',', '.', regex=True), errors='coerce')
+
+        # Handle the rank column specifically
+        df['Rank'] = df['Rank'].astype(int)  # Convert rank to integer
+
+        return df
+    except FileNotFoundError:
+        print(f"O arquivo {file} não foi encontrado.")
+        return pd.DataFrame()
+
+# Load data using the adjusted function
+df = load_data('coletandodados_data_onScannedRobot.csv')
+
+# Now you can use the 'df' DataFrame for further analysis
+print(df.head())  # Print the first few rows for inspection
+
+
+if not df.empty:
+    # Imprima as colunas do DataFrame para verificar se estão corretas
+    print("Colunas do DataFrame:")
+    print(df.columns)
+
+    # Adicione a coluna 'ganhou' (1 se ficou em primeiro, 0 caso contrário)
+    df['ganhou'] = df['Rank'].apply(lambda x: 1 if x == '1st' else 0)
+
+    # Exibir as primeiras linhas para verificar se a coluna foi adicionada corretamente
+    print(df.head())
+
+    # Separe as características e a variável alvo
+    X = df[['MyEnergie', 'MyGunHeat', 'MyGunHeading', 'MyHeading', 'MyRadarHeading', 'MyVelocity',
+            'Energy', 'Distance', 'Bearing', 'Heading', 'Velocity']]
+    y = df['ganhou']
+
+    # Normalização dos dados
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    # Divida os dados em conjuntos de treinamento e teste
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Crie e treine o modelo de regressão logística
+    model = LogisticRegression()
+    model.fit(X_train, y_train)
+
+    # Faça previsões no conjunto de teste e avalie
+    y_pred = model.predict(X_test)
+    print(f"Acurácia: {accuracy_score(y_test, y_pred)}")
+
+    # Verifique a distribuição dos dados
+    print("Distribuição da coluna 'ganhou' no dataset completo:")
+    print(df['ganhou'].value_counts())
+    print("Distribuição da coluna 'ganhou' no conjunto de treinamento:")
+    print(y_train.value_counts())
+    print("Distribuição da coluna 'ganhou' no conjunto de teste:")
+    print(y_test.value_counts())
+
+    # Validação cruzada
+    scores = cross_val_score(model, X, y, cv=5)
+    print(f'Cross-validation scores: {scores}')
+    print(f'Mean cross-validation score: {scores.mean()}')
+
+    # Matriz de confusão
+    cm = confusion_matrix(y_test, y_pred)
+    print(f'Confusion Matrix:\n{cm}')
+
+    # Relatório de classificação
+    report = classification_report(y_test, y_pred)
+    print(f'Classification Report:\n{report}')
+else:
+    print("Nenhum dado para treinar o modelo.")
